@@ -1,5 +1,6 @@
 package com.ricardo.movilApp.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,6 +28,7 @@ public class Cliente {
     private String direccion;
     private String provincia;
     private String capital;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private LocalDate fecha;
 
     @OneToOne
