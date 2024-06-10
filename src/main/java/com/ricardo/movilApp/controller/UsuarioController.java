@@ -13,14 +13,12 @@ import java.util.List;
 @RequestMapping("/usuarios")
 @RequiredArgsConstructor
 public class UsuarioController {
-
     private final UsuarioService usuarioService;
 
     @PostMapping("/login")
     public ResponseEntity<GenericResponse<UsuarioDTO>> login(@RequestParam String email, @RequestParam String password) {
         return ResponseEntity.ok(usuarioService.login(email, password));
     }
-
 
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDTO> update(@PathVariable Long id, @RequestBody UsuarioDTO usuarioDTO) {

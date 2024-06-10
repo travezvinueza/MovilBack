@@ -25,7 +25,8 @@ CREATE TABLE clientes (
 -- Crear tabla roles
 CREATE TABLE roles (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    role VARCHAR(255)
+    name VARCHAR(255),
+    fecha DATE
 );
 
 -- Crear tabla intermedia users_role

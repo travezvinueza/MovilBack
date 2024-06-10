@@ -40,7 +40,7 @@ public class ClienteServiceImpl implements ClienteService {
                 .vigencia(true)
                 .build();
 
-        Role userRole = roleRepository.findByRole("USER");
+        Role userRole = roleRepository.findByName("USER");
         if (userRole == null) {
             return new GenericResponse<>(TIPO_DATA, RPTA_ERROR, "No se pudo encontrar el rol 'USER'", null);
         }

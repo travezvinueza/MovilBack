@@ -27,7 +27,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario user = usuarioRepository.findByEmailAndContrasena(email, password);
 
         if (user != null) {
-            String role = user.getRoles().stream().findFirst().map(Role::getRole).orElse("DEFAULT_ROLE");
+            String role = user.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE");
 
             UsuarioDTO userDto = UsuarioDTO.builder()
                     .id(user.getId())
@@ -52,7 +52,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuario.setContrasena(usuarioDTO.getContrasena());
         usuario.setVigencia(usuarioDTO.isVigencia());
 
-        Role role = roleRepository.findByRole(usuarioDTO.getRole());
+        Role role = roleRepository.findByName(usuarioDTO.getRole());
         usuario.getRoles().clear();
         usuario.getRoles().add(role);
 
@@ -63,7 +63,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .email(usuario.getEmail())
                 .contrasena(usuario.getContrasena())
                 .vigencia(usuario.isVigencia())
-                .role(role.getRole())
+                .role(role.getName())
                 .build();
     }
 
@@ -79,7 +79,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario not found"));
 
-        String role = usuario.getRoles().stream().findFirst().map(Role::getRole).orElse("DEFAULT_ROLE");
+        String role = usuario.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE");
 
         return UsuarioDTO.builder()
                 .id(usuario.getId())
@@ -95,7 +95,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         List<Usuario> usuarios = usuarioRepository.findAll();
         return usuarios.stream()
                 .map(usuario -> {
-                    String role = usuario.getRoles().stream().findFirst().map(Role::getRole).orElse("DEFAULT_ROLE");
+                    String role = usuario.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE");
                     return UsuarioDTO.builder()
                             .id(usuario.getId())
                             .email(usuario.getEmail())

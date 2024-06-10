@@ -1,8 +1,8 @@
 package com.ricardo.movilApp.dto;
 
 import lombok.*;
-
 import java.time.LocalDate;
+
 @Data
 @Builder
 @AllArgsConstructor
