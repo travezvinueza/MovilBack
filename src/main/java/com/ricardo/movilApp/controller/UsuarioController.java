@@ -20,6 +20,21 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.login(email, password));
     }
 
+    @PostMapping("/toggle-vigencia")
+    public GenericResponse<UsuarioDTO> toggleUserVigencia(@RequestParam Long userId, @RequestParam boolean vigencia) {
+        return usuarioService.toggleUserVigencia(userId, vigencia);
+    }
+
+    @PostMapping("/forgot-password-")
+    public GenericResponse<String> forgotPassword(@RequestParam String email) {
+        return usuarioService.requestPasswordReset(email);
+    }
+
+    @PostMapping("/reset-password")
+    public GenericResponse<String> verifyAndResetPassword(@RequestParam String otp, @RequestParam String newPassword) {
+        return usuarioService.verifyAndResetPassword(otp, newPassword);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDTO> update(@PathVariable Long id, @RequestBody UsuarioDTO usuarioDTO) {
         return ResponseEntity.ok(usuarioService.update(id, usuarioDTO));

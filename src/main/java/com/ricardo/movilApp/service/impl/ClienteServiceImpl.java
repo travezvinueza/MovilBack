@@ -30,7 +30,7 @@ public class ClienteServiceImpl implements ClienteService {
     @Override
     public GenericResponse<ClienteDTO> save(ClienteDTO clienteDTO) {
         if (clienteRepository.existsByNumDoc(clienteDTO.getNumDoc())) {
-            return new GenericResponse<>(TIPO_DATA, RPTA_WARNING, "Ya existe un cliente con esos mismos datos", null);
+            return new GenericResponse<>(TIPO_AUTH, RPTA_WARNING, "Ya existe un cliente con esos mismos datos", null);
         }
 
         UsuarioRegistroDTO usuarioRegistro = clienteDTO.getUsuarioRegistroDTO();
@@ -42,7 +42,7 @@ public class ClienteServiceImpl implements ClienteService {
 
         Role userRole = roleRepository.findByName("USER");
         if (userRole == null) {
-            return new GenericResponse<>(TIPO_DATA, RPTA_ERROR, "No se pudo encontrar el rol 'USER'", null);
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "No se pudo encontrar el rol 'USER'", null);
         }
 
         if (usuario.getRoles() == null) {
@@ -69,7 +69,7 @@ public class ClienteServiceImpl implements ClienteService {
 
         clienteDTO.setId(cliente.getId());
         clienteDTO.setUsuarioId(usuario.getId());
-        return new GenericResponse<>(TIPO_DATA, RPTA_OK, "Cliente registrado correctamente", clienteDTO);
+        return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Cliente registrado correctamente", clienteDTO);
     }
 
     @Override

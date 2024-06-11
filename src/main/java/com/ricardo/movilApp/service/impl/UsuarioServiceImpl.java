@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static com.ricardo.movilApp.util.Global.*;
@@ -20,6 +22,7 @@ import static com.ricardo.movilApp.util.Global.*;
 public class UsuarioServiceImpl implements UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final RoleRepository roleRepository;
+    private final EmailService emailService;
 
 
     @Override
@@ -27,20 +30,87 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario user = usuarioRepository.findByEmailAndContrasena(email, password);
 
         if (user != null) {
-            String role = user.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE");
+            if (user.isVigencia()) {
+                String role = user.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE");
+
+                UsuarioDTO userDto = UsuarioDTO.builder()
+                        .id(user.getId())
+                        .email(user.getEmail())
+                        .contrasena(user.getContrasena())
+                        .vigencia(user.isVigencia())
+                        .role(role)
+                        .build();
+
+                return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Haz iniciado sesión correctamente", userDto);
+            } else {
+                return new GenericResponse<>(TIPO_AUTH, RPTA_WARNING, "Lo sentimos, tu cuenta está inactiva", null);
+            }
+        } else {
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR,"El Email o la Contraseña son incorrectos", null);
+        }
+    }
+
+    public GenericResponse<UsuarioDTO> toggleUserVigencia(Long userId, boolean vigencia) {
+        Optional<Usuario> optionalUser = usuarioRepository.findById(userId);
+
+        if (optionalUser.isPresent()) {
+            Usuario user = optionalUser.get();
+            user.setVigencia(vigencia);
+            usuarioRepository.save(user);
 
             UsuarioDTO userDto = UsuarioDTO.builder()
                     .id(user.getId())
                     .email(user.getEmail())
                     .contrasena(user.getContrasena())
                     .vigencia(user.isVigencia())
-                    .role(role)
+                    .role(user.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE"))
                     .build();
 
-            return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Haz iniciado sesión correctamente", userDto);
+            String message = vigencia ? ACTIVADO  : DESACTIVADO;
+            return new GenericResponse<>(TIPO_AUTH, RPTA_OK, message, userDto);
         } else {
-            return new GenericResponse<>(TIPO_AUTH, RPTA_WARNING, "Lo sentimos, ese usuario no existe", null);
+            return new GenericResponse<>(TIPO_RESULT, RPTA_ERROR, "Lo sentimos, ese usuario no existe", null);
         }
+    }
+
+    @Override
+    public GenericResponse<String> requestPasswordReset(String email) {
+        Usuario user = usuarioRepository.findByEmail(email);
+
+        if (user != null) {
+            String otp = generateOTP();
+            user.setOtp(otp);
+            usuarioRepository.save(user);
+
+            String subject = "Restablecimiento de contraseña";
+            String body = "Tu OTP para restablecer la contraseña es: " + otp;
+            emailService.sendEmail(email, subject, body);
+
+            return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "OTP enviado a tu correo electrónico", null);
+        } else {
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "Lo sentimos, ese usuario no existe", null);
+        }
+    }
+
+    @Override
+    public GenericResponse<String> verifyAndResetPassword(String otp, String newPassword) {
+        Usuario user = usuarioRepository.findByOtp(otp);
+
+        if (user != null) {
+            user.setContrasena(newPassword);
+            user.setOtp(null); // Eliminar OTP después de uso
+            usuarioRepository.save(user);
+
+            return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Contraseña restablecida correctamente", null);
+        } else {
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "El OTP es incorrecto o ha expirado", null);
+        }
+    }
+
+    private String generateOTP(){
+        Random random = new Random();
+        int otpValue = 100000 + random.nextInt(900000);
+        return String.valueOf(otpValue);
     }
 
     @Override

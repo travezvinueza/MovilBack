@@ -20,6 +20,7 @@ public class Usuario {
     private String email;
     private String contrasena;
     private boolean vigencia;
+    private String otp;
 
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private Cliente cliente;
