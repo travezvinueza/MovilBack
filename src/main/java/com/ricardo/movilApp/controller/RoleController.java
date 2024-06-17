@@ -16,19 +16,19 @@ import java.util.List;
 public class RoleController {
     private final RoleService roleService;
 
-    @PostMapping("/{save}")
-    public ResponseEntity<GenericResponse<RoleDTO>> save(@RequestBody RoleDTO roleDTO) {
+    @PostMapping("/save")
+    public ResponseEntity<GenericResponse<RoleDTO>> saveRole(@RequestBody RoleDTO roleDTO) {
         GenericResponse<RoleDTO> response = roleService.save(roleDTO);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<GenericResponse<RoleDTO>> update(@PathVariable Long id, @RequestBody RoleDTO roleDTO) {
+    @PutMapping("/update/{id}")
+    public ResponseEntity<GenericResponse<RoleDTO>> updateRole(@PathVariable Long id, @RequestBody RoleDTO roleDTO) {
         GenericResponse<RoleDTO> response = roleService.update(id, roleDTO);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/getById/{id}")
     public ResponseEntity<RoleDTO> getRoleById(@PathVariable Long id) {
         RoleDTO roleDTO = roleService.findById(id);
         return roleDTO != null ? new ResponseEntity<>(roleDTO, HttpStatus.OK) : new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -40,7 +40,7 @@ public class RoleController {
         return new ResponseEntity<>(roles, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
         roleService.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

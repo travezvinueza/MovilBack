@@ -1,9 +1,12 @@
 -- Crear tabla usuarios
 CREATE TABLE usuarios (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     contrasena VARCHAR(255) NOT NULL,
-    vigencia BOOLEAN
+    otp VARCHAR(255),
+    vigencia BOOLEAN,
+    fecha DATE
 );
 
 -- Crear tabla clientes

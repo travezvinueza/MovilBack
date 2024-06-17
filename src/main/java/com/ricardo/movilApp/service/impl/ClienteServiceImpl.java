@@ -29,14 +29,20 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     public GenericResponse<ClienteDTO> save(ClienteDTO clienteDTO) {
+        if (usuarioRepository.findByEmail(clienteDTO.getUsuarioRegistroDTO().getEmail()) != null) {
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "El correo electrónico ya existe. Intenta con otro", null);
+        }
+
         if (clienteRepository.existsByNumDoc(clienteDTO.getNumDoc())) {
-            return new GenericResponse<>(TIPO_AUTH, RPTA_WARNING, "Ya existe un cliente con esos mismos datos", null);
+            return new GenericResponse<>(TIPO_AUTH, RPTA_WARNING, "Ya existe un cliente con ese mismo numero de identificacion", null);
         }
 
         UsuarioRegistroDTO usuarioRegistro = clienteDTO.getUsuarioRegistroDTO();
         Usuario usuario = Usuario.builder()
+                .username(usuarioRegistro.getUsername())
                 .email(usuarioRegistro.getEmail())
                 .contrasena(usuarioRegistro.getContrasena())
+                .fecha(usuarioRegistro.getFecha())
                 .vigencia(true)
                 .build();
 
@@ -80,9 +86,11 @@ public class ClienteServiceImpl implements ClienteService {
         Usuario usuario = cliente.getUsuario();
         UsuarioRegistroDTO usuarioRegistro = clienteDTO.getUsuarioRegistroDTO();
 
+        usuario.setUsername(usuario.getUsername());
         usuario.setEmail(usuarioRegistro.getEmail());
         usuario.setContrasena(usuarioRegistro.getContrasena());
         usuario.setVigencia(usuarioRegistro.isVigencia());
+        usuario.setFecha(usuarioRegistro.getFecha());
 
         usuarioRepository.save(usuario);
 
@@ -131,9 +139,11 @@ public class ClienteServiceImpl implements ClienteService {
 
     private ClienteDTO mapToDTO(Cliente cliente) {
         UsuarioRegistroDTO usuarioDTO = UsuarioRegistroDTO.builder()
+                .username(cliente.getUsuario().getUsername())
                 .email(cliente.getUsuario().getEmail())
                 .contrasena(cliente.getUsuario().getContrasena())
                 .vigencia(cliente.getUsuario().isVigencia())
+                .fecha(cliente.getFecha())
                 .build();
 
         return ClienteDTO.builder()

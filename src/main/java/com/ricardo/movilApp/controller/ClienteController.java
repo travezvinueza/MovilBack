@@ -16,28 +16,28 @@ public class ClienteController {
     private final ClienteService clienteService;
 
     @PostMapping("/register")
-    public ResponseEntity<GenericResponse<ClienteDTO>> save(@RequestBody ClienteDTO clienteDTO) {
+    public ResponseEntity<GenericResponse<ClienteDTO>> saveClient(@RequestBody ClienteDTO clienteDTO) {
         return ResponseEntity.ok(clienteService.save(clienteDTO));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ClienteDTO> update(@PathVariable Long id, @RequestBody ClienteDTO clienteDTO) {
+    @PutMapping("/update/{id}")
+    public ResponseEntity<ClienteDTO> updateClient(@PathVariable Long id, @RequestBody ClienteDTO clienteDTO) {
         return ResponseEntity.ok(clienteService.update(id, clienteDTO));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteClient(@PathVariable Long id) {
         clienteService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/getById/{id}")
     public ResponseEntity<ClienteDTO> getClienteById(@PathVariable Long id) {
         return ResponseEntity.ok(clienteService.buscarClientePorId(id));
     }
 
-    @GetMapping
-    public ResponseEntity<List<ClienteDTO>> listar() {
+    @GetMapping("/list")
+    public ResponseEntity<List<ClienteDTO>> getListClient() {
         return ResponseEntity.ok(clienteService.listar());
     }
 }

@@ -15,17 +15,26 @@ import java.util.List;
 public class UsuarioController {
     private final UsuarioService usuarioService;
 
+    @PostMapping("/create")
+    public GenericResponse<UsuarioDTO> createUser(@RequestBody UsuarioDTO usuarioDTO) {
+        return usuarioService.create(usuarioDTO);
+    }
+    @PutMapping("/update/{id}")
+    public GenericResponse<UsuarioDTO> updateUser(@PathVariable Long id, @RequestBody UsuarioDTO usuarioDTO) {
+        return usuarioService.update(id, usuarioDTO);
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<GenericResponse<UsuarioDTO>> login(@RequestParam String email, @RequestParam String password) {
-        return ResponseEntity.ok(usuarioService.login(email, password));
+    public ResponseEntity<GenericResponse<UsuarioDTO>> login(@RequestParam String username, @RequestParam String password) {
+        return ResponseEntity.ok(usuarioService.login(username, password));
     }
 
-    @PostMapping("/toggle-vigencia")
-    public GenericResponse<UsuarioDTO> toggleUserVigencia(@RequestParam Long userId, @RequestParam boolean vigencia) {
-        return usuarioService.toggleUserVigencia(userId, vigencia);
+    @PostMapping("/toggle-vigencia/{id}")
+    public GenericResponse<UsuarioDTO> toggleUserVigencia(@PathVariable Long id, @RequestParam boolean vigencia) {
+        return usuarioService.toggleUserVigencia(id, vigencia);
     }
 
-    @PostMapping("/forgot-password-")
+    @PostMapping("/forgot-password")
     public GenericResponse<String> forgotPassword(@RequestParam String email) {
         return usuarioService.requestPasswordReset(email);
     }
@@ -35,25 +44,19 @@ public class UsuarioController {
         return usuarioService.verifyAndResetPassword(otp, newPassword);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<UsuarioDTO> update(@PathVariable Long id, @RequestBody UsuarioDTO usuarioDTO) {
-        return ResponseEntity.ok(usuarioService.update(id, usuarioDTO));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        usuarioService.delete(id);
-        return ResponseEntity.noContent().build();
+    @DeleteMapping("/delete/{id}")
+    public GenericResponse<UsuarioDTO> deleteUser(@PathVariable Long id) {
+        return usuarioService.delete(id);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioDTO> getUsuarioById(@PathVariable Long id) {
+    public ResponseEntity<UsuarioDTO> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(usuarioService.buscarUsuarioPorId(id));
     }
 
     @GetMapping("/listar")
-    public ResponseEntity<List<UsuarioDTO>> listar() {
-        return ResponseEntity.ok(usuarioService.listar());
+    public GenericResponse<List<UsuarioDTO>> listUser() {
+        return usuarioService.listar();
     }
 
 }
