@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ClienteService {
     GenericResponse<ClienteDTO> save (ClienteDTO clienteDTO);
-    ClienteDTO update (Long id, ClienteDTO clienteDTO);
+    GenericResponse<ClienteDTO> update (Long id, ClienteDTO clienteDTO);
     ClienteDTO buscarClientePorId(Long id);
     List<ClienteDTO> listar();
     void delete(Long id);

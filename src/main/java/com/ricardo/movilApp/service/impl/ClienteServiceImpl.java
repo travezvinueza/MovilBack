@@ -1,7 +1,7 @@
 package com.ricardo.movilApp.service.impl;
 
 import com.ricardo.movilApp.dto.ClienteDTO;
-import com.ricardo.movilApp.dto.UsuarioRegistroDTO;
+import com.ricardo.movilApp.dto.ClienteUsuarioDTO;
 import com.ricardo.movilApp.entity.Cliente;
 import com.ricardo.movilApp.entity.Role;
 import com.ricardo.movilApp.entity.Usuario;
@@ -10,6 +10,7 @@ import com.ricardo.movilApp.repository.RoleRepository;
 import com.ricardo.movilApp.repository.UsuarioRepository;
 import com.ricardo.movilApp.service.ClienteService;
 import com.ricardo.movilApp.util.GenericResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 import static com.ricardo.movilApp.util.Global.*;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class ClienteServiceImpl implements ClienteService {
     private final ClienteRepository clienteRepository;
@@ -29,7 +31,7 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     public GenericResponse<ClienteDTO> save(ClienteDTO clienteDTO) {
-        if (usuarioRepository.findByEmail(clienteDTO.getUsuarioRegistroDTO().getEmail()) != null) {
+        if (usuarioRepository.findByEmail(clienteDTO.getClienteUsuarioDTO().getEmail()) != null) {
             return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "El correo electrónico ya existe. Intenta con otro", null);
         }
 
@@ -37,12 +39,12 @@ public class ClienteServiceImpl implements ClienteService {
             return new GenericResponse<>(TIPO_AUTH, RPTA_WARNING, "Ya existe un cliente con ese mismo numero de identificacion", null);
         }
 
-        UsuarioRegistroDTO usuarioRegistro = clienteDTO.getUsuarioRegistroDTO();
+        ClienteUsuarioDTO clienteUsuarioDTO = clienteDTO.getClienteUsuarioDTO();
         Usuario usuario = Usuario.builder()
-                .username(usuarioRegistro.getUsername())
-                .email(usuarioRegistro.getEmail())
-                .contrasena(usuarioRegistro.getContrasena())
-                .fecha(usuarioRegistro.getFecha())
+                .username(clienteUsuarioDTO.getUsername())
+                .email(clienteUsuarioDTO.getEmail())
+                .contrasena(clienteUsuarioDTO.getContrasena())
+                .fecha(clienteUsuarioDTO.getFecha())
                 .vigencia(true)
                 .build();
 
@@ -51,12 +53,8 @@ public class ClienteServiceImpl implements ClienteService {
             return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "No se pudo encontrar el rol 'USER'", null);
         }
 
-        if (usuario.getRoles() == null) {
-            usuario.setRoles(new HashSet<>());
-        }
+        usuario.setRoles(new HashSet<>());
         usuario.getRoles().add(userRole);
-
-        usuario = usuarioRepository.save(usuario);
 
         Cliente cliente = Cliente.builder()
                 .nombres(clienteDTO.getNombres())
@@ -71,29 +69,22 @@ public class ClienteServiceImpl implements ClienteService {
                 .usuario(usuario)
                 .build();
 
+
         cliente = clienteRepository.save(cliente);
+        usuario = usuarioRepository.save(usuario);
 
         clienteDTO.setId(cliente.getId());
-        clienteDTO.setUsuarioId(usuario.getId());
         return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Cliente registrado correctamente", clienteDTO);
     }
 
     @Override
-    public ClienteDTO update(Long id, ClienteDTO clienteDTO) {
-        Cliente cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente no existe"));
+    public GenericResponse<ClienteDTO> update(Long id, ClienteDTO clienteDTO) {
+        Optional<Cliente> optionalCliente = clienteRepository.findById(id);
+        if (optionalCliente.isEmpty()) {
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "Cliente no encontrado", null);
+        }
 
-        Usuario usuario = cliente.getUsuario();
-        UsuarioRegistroDTO usuarioRegistro = clienteDTO.getUsuarioRegistroDTO();
-
-        usuario.setUsername(usuario.getUsername());
-        usuario.setEmail(usuarioRegistro.getEmail());
-        usuario.setContrasena(usuarioRegistro.getContrasena());
-        usuario.setVigencia(usuarioRegistro.isVigencia());
-        usuario.setFecha(usuarioRegistro.getFecha());
-
-        usuarioRepository.save(usuario);
-
+        Cliente cliente = optionalCliente.get();
         cliente.setNombres(clienteDTO.getNombres());
         cliente.setApellidos(clienteDTO.getApellidos());
         cliente.setTelefono(clienteDTO.getTelefono());
@@ -104,9 +95,20 @@ public class ClienteServiceImpl implements ClienteService {
         cliente.setCapital(clienteDTO.getCapital());
         cliente.setFecha(clienteDTO.getFecha());
 
-        cliente = clienteRepository.save(cliente);
+        Usuario usuario = cliente.getUsuario();
+        ClienteUsuarioDTO clienteUsuarioDTO = clienteDTO.getClienteUsuarioDTO();
 
-        return clienteDTO;
+        usuario.setUsername(clienteUsuarioDTO.getUsername());
+        usuario.setEmail(clienteUsuarioDTO.getEmail());
+        usuario.setContrasena(clienteUsuarioDTO.getContrasena());
+        usuario.setVigencia(clienteUsuarioDTO.isVigencia());
+        usuario.setFecha(clienteUsuarioDTO.getFecha());
+
+        clienteRepository.save(cliente);
+        usuarioRepository.save(usuario);
+
+        clienteDTO.setId(cliente.getId());
+        return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Cliente actualizado correctamente", clienteDTO);
     }
 
     @Override
@@ -138,7 +140,8 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     private ClienteDTO mapToDTO(Cliente cliente) {
-        UsuarioRegistroDTO usuarioDTO = UsuarioRegistroDTO.builder()
+        ClienteUsuarioDTO clienteUsuarioDTO = ClienteUsuarioDTO.builder()
+                .id(cliente.getUsuario().getId())
                 .username(cliente.getUsuario().getUsername())
                 .email(cliente.getUsuario().getEmail())
                 .contrasena(cliente.getUsuario().getContrasena())
@@ -158,7 +161,7 @@ public class ClienteServiceImpl implements ClienteService {
                 .capital(cliente.getCapital())
                 .fecha(cliente.getFecha())
                 .usuarioId(cliente.getUsuario().getId())
-                .usuarioRegistroDTO(usuarioDTO)
+                .clienteUsuarioDTO(clienteUsuarioDTO)
                 .build();
     }
 }

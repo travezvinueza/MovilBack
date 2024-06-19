@@ -19,5 +19,5 @@ public class ClienteDTO {
     private String capital;
     private LocalDate fecha;
     private Long usuarioId;
-    private UsuarioRegistroDTO usuarioRegistroDTO;
+    private ClienteUsuarioDTO clienteUsuarioDTO;
 }

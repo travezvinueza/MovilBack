@@ -21,7 +21,7 @@ public class ClienteController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<ClienteDTO> updateClient(@PathVariable Long id, @RequestBody ClienteDTO clienteDTO) {
+    public ResponseEntity<GenericResponse<ClienteDTO>> updateClient(@PathVariable Long id, @RequestBody ClienteDTO clienteDTO) {
         return ResponseEntity.ok(clienteService.update(id, clienteDTO));
     }
 

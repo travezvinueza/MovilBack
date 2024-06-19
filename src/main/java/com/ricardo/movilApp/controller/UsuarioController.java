@@ -19,6 +19,12 @@ public class UsuarioController {
     public GenericResponse<UsuarioDTO> createUser(@RequestBody UsuarioDTO usuarioDTO) {
         return usuarioService.create(usuarioDTO);
     }
+
+    @GetMapping("/getById/{id}")
+    public GenericResponse<UsuarioDTO> getUserById(@PathVariable Long id) {
+        return usuarioService.buscarUsuarioPorId(id);
+    }
+
     @PutMapping("/update/{id}")
     public GenericResponse<UsuarioDTO> updateUser(@PathVariable Long id, @RequestBody UsuarioDTO usuarioDTO) {
         return usuarioService.update(id, usuarioDTO);
@@ -49,10 +55,6 @@ public class UsuarioController {
         return usuarioService.delete(id);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<UsuarioDTO> getUserById(@PathVariable Long id) {
-        return ResponseEntity.ok(usuarioService.buscarUsuarioPorId(id));
-    }
 
     @GetMapping("/listar")
     public GenericResponse<List<UsuarioDTO>> listUser() {

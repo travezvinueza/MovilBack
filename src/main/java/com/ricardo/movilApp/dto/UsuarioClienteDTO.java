@@ -12,6 +12,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UsuarioClienteDTO {
+    private Long id;
     private String nombres;
     private String apellidos;
     private String telefono;
@@ -21,5 +22,5 @@ public class UsuarioClienteDTO {
     private String provincia;
     private String capital;
     private LocalDate fecha;
+    private Long usuarioId;
 }
-

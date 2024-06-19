@@ -10,7 +10,6 @@ import com.ricardo.movilApp.repository.RoleRepository;
 import com.ricardo.movilApp.repository.UsuarioRepository;
 import com.ricardo.movilApp.service.UsuarioService;
 import com.ricardo.movilApp.util.GenericResponse;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 import static com.ricardo.movilApp.util.Global.*;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class UsuarioServiceImpl implements UsuarioService {
     private final UsuarioRepository usuarioRepository;
@@ -35,6 +33,10 @@ public class UsuarioServiceImpl implements UsuarioService {
     public GenericResponse<UsuarioDTO> create(UsuarioDTO usuarioDTO) {
         if (usuarioRepository.findByEmail(usuarioDTO.getEmail()) != null) {
             return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "El correo electrónico ya existe. Intenta con otro", null);
+        }
+
+        if (clienteRepository.existsByNumDoc(usuarioDTO.getUsuarioClienteDto().getNumDoc())) {
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "Ya existe un cliente con ese mismo numero de identificacion", null);
         }
 
         Role role = roleRepository.findByName(usuarioDTO.getRole());
@@ -51,26 +53,24 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .roles(Set.of(role))
                 .build();
 
-        UsuarioClienteDTO clienteDTO = usuarioDTO.getUsuarioClienteDTO();
+        UsuarioClienteDTO usuarioClienteDto = usuarioDTO.getUsuarioClienteDto();
         Cliente cliente = Cliente.builder()
-                .nombres(clienteDTO.getNombres())
-                .apellidos(clienteDTO.getApellidos())
-                .telefono(clienteDTO.getTelefono())
-                .tipoDoc(clienteDTO.getTipoDoc())
-                .numDoc(clienteDTO.getNumDoc())
-                .direccion(clienteDTO.getDireccion())
-                .provincia(clienteDTO.getProvincia())
-                .capital(clienteDTO.getCapital())
-                .fecha(clienteDTO.getFecha())
+                .nombres(usuarioClienteDto.getNombres())
+                .apellidos(usuarioClienteDto.getApellidos())
+                .telefono(usuarioClienteDto.getTelefono())
+                .tipoDoc(usuarioClienteDto.getTipoDoc())
+                .numDoc(usuarioClienteDto.getNumDoc())
+                .direccion(usuarioClienteDto.getDireccion())
+                .provincia(usuarioClienteDto.getProvincia())
+                .capital(usuarioClienteDto.getCapital())
+                .fecha(usuarioClienteDto.getFecha())
                 .usuario(usuario)
                 .build();
 
-        usuario.setCliente(cliente);
         usuario = usuarioRepository.save(usuario);
         cliente = clienteRepository.save(cliente);
 
         usuarioDTO.setId(usuario.getId());
-        usuarioDTO.setClienteId(cliente.getId());
         return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Usuario creado correctamente", usuarioDTO);
     }
 
@@ -81,7 +81,22 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         if (user != null) {
             if (user.isVigencia()) {
-                String role = user.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE");
+                String role = user.getRoles().stream().findFirst().map(Role::getName).orElse("USER");
+
+                Cliente cliente = user.getCliente();
+                UsuarioClienteDTO usuarioClienteDto = UsuarioClienteDTO.builder()
+                        .id(cliente.getId())
+                        .nombres(cliente.getNombres())
+                        .apellidos(cliente.getApellidos())
+                        .telefono(cliente.getTelefono())
+                        .tipoDoc(cliente.getTipoDoc())
+                        .numDoc(cliente.getNumDoc())
+                        .direccion(cliente.getDireccion())
+                        .provincia(cliente.getProvincia())
+                        .capital(cliente.getCapital())
+                        .fecha(cliente.getFecha())
+                        .usuarioId(cliente.getUsuario().getId())
+                        .build();
 
                 UsuarioDTO userDto = UsuarioDTO.builder()
                         .id(user.getId())
@@ -91,6 +106,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                         .vigencia(user.isVigencia())
                         .fecha(user.getFecha())
                         .role(role)
+                        .usuarioClienteDto(usuarioClienteDto)
                         .build();
 
                 return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Haz iniciado sesión correctamente", userDto);
@@ -98,7 +114,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                 return new GenericResponse<>(TIPO_AUTH, RPTA_WARNING, "Lo sentimos, tu cuenta está inactiva", null);
             }
         } else {
-            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR,"El Usuario o la Contraseña son incorrectos", null);
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "El Usuario o la Contraseña son incorrectos", null);
         }
     }
 
@@ -120,7 +136,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                     .role(user.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE"))
                     .build();
 
-            String message = vigencia ? ACTIVADO  : DESACTIVADO;
+            String message = vigencia ? ACTIVADO : DESACTIVADO;
             return new GenericResponse<>(TIPO_AUTH, RPTA_OK, message, userDto);
         } else {
             return new GenericResponse<>(TIPO_RESULT, RPTA_ERROR, "Lo sentimos, ese usuario no existe", null);
@@ -161,7 +177,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
     }
 
-    private String generateOTP(){
+    private String generateOTP() {
         Random random = new Random();
         int otpValue = 100000 + random.nextInt(900000);
         return String.valueOf(otpValue);
@@ -169,13 +185,17 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public GenericResponse<UsuarioDTO> update(Long id, UsuarioDTO usuarioDTO) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        Optional<Usuario> optionalUsuario = usuarioRepository.findById(id);
+        if (optionalUsuario.isEmpty()) {
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "Usuario no encontrado", null);
+        }
 
         Role role = roleRepository.findByName(usuarioDTO.getRole());
         if (role == null) {
             return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "Role no encontrado", null);
         }
+
+        Usuario usuario = optionalUsuario.get();
         usuario.setUsername(usuarioDTO.getUsername());
         usuario.setEmail(usuarioDTO.getEmail());
         usuario.setContrasena(usuarioDTO.getContrasena());
@@ -184,36 +204,22 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuario.getRoles().clear();
         usuario.getRoles().add(role);
 
-        UsuarioClienteDTO clienteDTO = usuarioDTO.getUsuarioClienteDTO();
         Cliente cliente = usuario.getCliente();
-        if (cliente != null) {
-            cliente.setNombres(clienteDTO.getNombres());
-            cliente.setApellidos(clienteDTO.getApellidos());
-            cliente.setTelefono(clienteDTO.getTelefono());
-            cliente.setTipoDoc(clienteDTO.getTipoDoc());
-            cliente.setNumDoc(clienteDTO.getNumDoc());
-            cliente.setDireccion(clienteDTO.getDireccion());
-            cliente.setProvincia(clienteDTO.getProvincia());
-            cliente.setCapital(clienteDTO.getCapital());
-            cliente.setFecha(clienteDTO.getFecha());
-        } else {
-            // Si el usuario no tiene un cliente asociado, crear uno nuevo
-            cliente = Cliente.builder()
-                    .nombres(clienteDTO.getNombres())
-                    .apellidos(clienteDTO.getApellidos())
-                    .telefono(clienteDTO.getTelefono())
-                    .tipoDoc(clienteDTO.getTipoDoc())
-                    .numDoc(clienteDTO.getNumDoc())
-                    .direccion(clienteDTO.getDireccion())
-                    .provincia(clienteDTO.getProvincia())
-                    .capital(clienteDTO.getCapital())
-                    .fecha(clienteDTO.getFecha())
-                    .usuario(usuario)
-                    .build();
-            usuario.setCliente(cliente);
-        }
+        UsuarioClienteDTO clienteDTO = usuarioDTO.getUsuarioClienteDto();
+
+        cliente.setNombres(clienteDTO.getNombres());
+        cliente.setApellidos(clienteDTO.getApellidos());
+        cliente.setTelefono(clienteDTO.getTelefono());
+        cliente.setTipoDoc(clienteDTO.getTipoDoc());
+        cliente.setNumDoc(clienteDTO.getNumDoc());
+        cliente.setDireccion(clienteDTO.getDireccion());
+        cliente.setProvincia(clienteDTO.getProvincia());
+        cliente.setCapital(clienteDTO.getCapital());
+        cliente.setFecha(clienteDTO.getFecha());
 
         usuario = usuarioRepository.save(usuario);
+        cliente = clienteRepository.save(cliente);
+
         usuarioDTO.setId(usuario.getId());
         return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Usuario actualizado correctamente", usuarioDTO);
     }
@@ -230,11 +236,42 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
-    public UsuarioDTO buscarUsuarioPorId(Long id) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario not found"));
+    public GenericResponse<UsuarioDTO> buscarUsuarioPorId(Long id) {
+        Optional<Usuario> optionalUsuario = usuarioRepository.findById(id);
+        if (optionalUsuario.isEmpty()) {
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "Usuario no encontrado", null);
+        }
 
-        String role = usuario.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE");
+        Usuario usuario = optionalUsuario.get();
+        UsuarioDTO usuarioDTO = mapToUsuarioDTO(usuario);
+        return new GenericResponse<>(TIPO_DATA, RPTA_OK, OPERACION_CORRECTA, usuarioDTO);
+    }
+
+    @Override
+    public GenericResponse<List<UsuarioDTO>> listar() {
+        List<Usuario> usuarios = usuarioRepository.findAll();
+        List<UsuarioDTO> usuarioDTOs = usuarios.stream()
+                .map(this::mapToUsuarioDTO)
+                .collect(Collectors.toList());
+
+        return new GenericResponse<>(TIPO_AUTH, RPTA_OK, OPERACION_CORRECTA, usuarioDTOs);
+    }
+
+    private UsuarioDTO mapToUsuarioDTO(Usuario usuario) {
+        Cliente cliente = usuario.getCliente();
+        UsuarioClienteDTO usuarioClienteDto = UsuarioClienteDTO.builder()
+                .id(cliente.getId())
+                .nombres(cliente.getNombres())
+                .apellidos(cliente.getApellidos())
+                .telefono(cliente.getTelefono())
+                .tipoDoc(cliente.getTipoDoc())
+                .numDoc(cliente.getNumDoc())
+                .direccion(cliente.getDireccion())
+                .provincia(cliente.getProvincia())
+                .capital(cliente.getCapital())
+                .fecha(cliente.getFecha())
+                .usuarioId(cliente.getUsuario().getId())
+                .build();
 
         return UsuarioDTO.builder()
                 .id(usuario.getId())
@@ -243,28 +280,8 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .contrasena(usuario.getContrasena())
                 .vigencia(usuario.isVigencia())
                 .fecha(usuario.getFecha())
-                .role(role)
+                .role(usuario.getRoles().stream().findFirst().map(Role::getName).orElse("USER"))
+                .usuarioClienteDto(usuarioClienteDto)
                 .build();
-    }
-
-    @Override
-    public GenericResponse<List<UsuarioDTO>> listar() {
-        List<Usuario> usuarios = usuarioRepository.findAll();
-        List<UsuarioDTO> usuarioDTOs = usuarios.stream()
-                .map(usuario -> {
-                    String role = usuario.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE");
-                    return UsuarioDTO.builder()
-                            .id(usuario.getId())
-                            .username(usuario.getUsername())
-                            .email(usuario.getEmail())
-                            .contrasena(usuario.getContrasena())
-                            .vigencia(usuario.isVigencia())
-                            .fecha(usuario.getFecha())
-                            .role(role)
-                            .build();
-                })
-                .collect(Collectors.toList());
-
-        return new GenericResponse<>(TIPO_AUTH, RPTA_OK, OPERACION_CORRECTA, usuarioDTOs);
     }
 }
