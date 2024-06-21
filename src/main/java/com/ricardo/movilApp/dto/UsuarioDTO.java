@@ -16,5 +16,6 @@ public class UsuarioDTO {
     private boolean vigencia;
     private String role;
     private LocalDate fecha;
+    private Long clienteId;
     private UsuarioClienteDTO usuarioClienteDto;
 }

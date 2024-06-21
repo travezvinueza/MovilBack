@@ -1,5 +1,6 @@
 package com.ricardo.movilApp.service.impl;
 
+import com.ricardo.movilApp.dto.ClienteDTO;
 import com.ricardo.movilApp.dto.UsuarioClienteDTO;
 import com.ricardo.movilApp.dto.UsuarioDTO;
 import com.ricardo.movilApp.entity.Cliente;
@@ -35,42 +36,46 @@ public class UsuarioServiceImpl implements UsuarioService {
             return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "El correo electrónico ya existe. Intenta con otro", null);
         }
 
-        if (clienteRepository.existsByNumDoc(usuarioDTO.getUsuarioClienteDto().getNumDoc())) {
-            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "Ya existe un cliente con ese mismo numero de identificacion", null);
-        }
+//        if (clienteRepository.existsByNumDoc(usuarioDTO.getUsuarioClienteDto().getNumDoc())) {
+//            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "Ya existe un cliente con ese mismo numero de identificacion", null);
+//        }
 
         Role role = roleRepository.findByName(usuarioDTO.getRole());
         if (role == null) {
             return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "Role no encontrado", null);
         }
 
+        Cliente cliente = Cliente.builder()
+                .id(usuarioDTO.getUsuarioClienteDto().getId())
+                .nombres(usuarioDTO.getUsuarioClienteDto().getNombres())
+                .apellidos(usuarioDTO.getUsuarioClienteDto().getApellidos())
+                .telefono(usuarioDTO.getUsuarioClienteDto().getTelefono())
+                .tipoDoc(usuarioDTO.getUsuarioClienteDto().getTipoDoc())
+                .numDoc(usuarioDTO.getUsuarioClienteDto().getNumDoc())
+                .direccion(usuarioDTO.getUsuarioClienteDto().getDireccion())
+                .provincia(usuarioDTO.getUsuarioClienteDto().getProvincia())
+                .capital(usuarioDTO.getUsuarioClienteDto().getCapital())
+                .fecha(usuarioDTO.getUsuarioClienteDto().getFecha())
+                .build();
+
+        cliente = clienteRepository.save(cliente);
+
         Usuario usuario = Usuario.builder()
+                .id(usuarioDTO.getId())
                 .username(usuarioDTO.getUsername())
                 .email(usuarioDTO.getEmail())
                 .contrasena(usuarioDTO.getContrasena())
                 .vigencia(true)
                 .fecha(usuarioDTO.getFecha())
                 .roles(Set.of(role))
-                .build();
-
-        UsuarioClienteDTO usuarioClienteDto = usuarioDTO.getUsuarioClienteDto();
-        Cliente cliente = Cliente.builder()
-                .nombres(usuarioClienteDto.getNombres())
-                .apellidos(usuarioClienteDto.getApellidos())
-                .telefono(usuarioClienteDto.getTelefono())
-                .tipoDoc(usuarioClienteDto.getTipoDoc())
-                .numDoc(usuarioClienteDto.getNumDoc())
-                .direccion(usuarioClienteDto.getDireccion())
-                .provincia(usuarioClienteDto.getProvincia())
-                .capital(usuarioClienteDto.getCapital())
-                .fecha(usuarioClienteDto.getFecha())
-                .usuario(usuario)
+                .cliente(cliente)
                 .build();
 
         usuario = usuarioRepository.save(usuario);
-        cliente = clienteRepository.save(cliente);
 
         usuarioDTO.setId(usuario.getId());
+        usuarioDTO.setClienteId(cliente.getId());
+        usuarioDTO.getUsuarioClienteDto().setId(cliente.getId());
         return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Usuario creado correctamente", usuarioDTO);
     }
 
@@ -95,7 +100,6 @@ public class UsuarioServiceImpl implements UsuarioService {
                         .provincia(cliente.getProvincia())
                         .capital(cliente.getCapital())
                         .fecha(cliente.getFecha())
-                        .usuarioId(cliente.getUsuario().getId())
                         .build();
 
                 UsuarioDTO userDto = UsuarioDTO.builder()
@@ -106,6 +110,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                         .vigencia(user.isVigencia())
                         .fecha(user.getFecha())
                         .role(role)
+                        .clienteId(cliente.getUsuario().getId())
                         .usuarioClienteDto(usuarioClienteDto)
                         .build();
 
@@ -133,6 +138,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                     .contrasena(user.getContrasena())
                     .vigencia(user.isVigencia())
                     .fecha(user.getFecha())
+                    .clienteId(user.getId())
                     .role(user.getRoles().stream().findFirst().map(Role::getName).orElse("DEFAULT_ROLE"))
                     .build();
 
@@ -248,6 +254,16 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
+    public UsuarioDTO getUsuarioPorId(Long id) {
+        Optional<Usuario> optionalUsuario = usuarioRepository.findById(id);
+        if (!optionalUsuario.isPresent()) {
+            throw new IllegalArgumentException("Cliente no encontrado");
+        }
+
+        return mapToUsuarioDTO(optionalUsuario.get());
+    }
+
+    @Override
     public GenericResponse<List<UsuarioDTO>> listar() {
         List<Usuario> usuarios = usuarioRepository.findAll();
         List<UsuarioDTO> usuarioDTOs = usuarios.stream()
@@ -270,7 +286,6 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .provincia(cliente.getProvincia())
                 .capital(cliente.getCapital())
                 .fecha(cliente.getFecha())
-                .usuarioId(cliente.getUsuario().getId())
                 .build();
 
         return UsuarioDTO.builder()
@@ -280,6 +295,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .contrasena(usuario.getContrasena())
                 .vigencia(usuario.isVigencia())
                 .fecha(usuario.getFecha())
+                .clienteId(cliente.getUsuario().getId())
                 .role(usuario.getRoles().stream().findFirst().map(Role::getName).orElse("USER"))
                 .usuarioClienteDto(usuarioClienteDto)
                 .build();

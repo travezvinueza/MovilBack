@@ -27,7 +27,8 @@ public class Usuario {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private LocalDate fecha;
 
-    @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "cliente_id", referencedColumnName = "id")
     private Cliente cliente;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -36,4 +37,3 @@ public class Usuario {
     Set<Role> roles = new HashSet<>();
 
 }
-

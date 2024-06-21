@@ -22,5 +22,4 @@ public class UsuarioClienteDTO {
     private String provincia;
     private String capital;
     private LocalDate fecha;
-    private Long usuarioId;
 }

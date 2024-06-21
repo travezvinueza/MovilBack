@@ -1,14 +1,13 @@
 package com.ricardo.movilApp.util;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class GenericResponse<T> {
     private String type;
     private int rpta;

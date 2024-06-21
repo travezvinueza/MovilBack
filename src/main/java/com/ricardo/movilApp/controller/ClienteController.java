@@ -31,11 +31,6 @@ public class ClienteController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/getById/{id}")
-    public ResponseEntity<ClienteDTO> getClienteById(@PathVariable Long id) {
-        return ResponseEntity.ok(clienteService.buscarClientePorId(id));
-    }
-
     @GetMapping("/list")
     public ResponseEntity<List<ClienteDTO>> getListClient() {
         return ResponseEntity.ok(clienteService.listar());

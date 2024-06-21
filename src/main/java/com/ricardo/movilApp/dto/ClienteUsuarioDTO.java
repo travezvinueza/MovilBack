@@ -18,4 +18,5 @@ public class ClienteUsuarioDTO {
     private String contrasena;
     private boolean vigencia;
     private LocalDate fecha;
+    private Long clienteId;
 }

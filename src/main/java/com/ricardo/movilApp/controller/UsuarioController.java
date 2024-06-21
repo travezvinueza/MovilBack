@@ -4,6 +4,7 @@ import com.ricardo.movilApp.dto.UsuarioDTO;
 import com.ricardo.movilApp.service.UsuarioService;
 import com.ricardo.movilApp.util.GenericResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +33,8 @@ public class UsuarioController {
 
     @PostMapping("/login")
     public ResponseEntity<GenericResponse<UsuarioDTO>> login(@RequestParam String username, @RequestParam String password) {
-        return ResponseEntity.ok(usuarioService.login(username, password));
+        GenericResponse<UsuarioDTO> response = usuarioService.login(username, password);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/toggle-vigencia/{id}")
@@ -59,6 +61,11 @@ public class UsuarioController {
     @GetMapping("/listar")
     public GenericResponse<List<UsuarioDTO>> listUser() {
         return usuarioService.listar();
+    }
+
+    @GetMapping("/getByIdUsuario/{id}")
+    public ResponseEntity<UsuarioDTO> getUsuarioById(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.getUsuarioPorId(id));
     }
 
 }

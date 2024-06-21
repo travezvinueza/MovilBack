@@ -1,5 +1,6 @@
 package com.ricardo.movilApp.service;
 
+import com.ricardo.movilApp.dto.ClienteDTO;
 import com.ricardo.movilApp.dto.UsuarioDTO;
 import com.ricardo.movilApp.util.GenericResponse;
 
@@ -15,4 +16,6 @@ public interface UsuarioService {
     GenericResponse<String> verifyAndResetPassword(String otp, String newPassword);
     GenericResponse<List<UsuarioDTO>> listar();
     GenericResponse<UsuarioDTO> delete(Long id);
+
+    UsuarioDTO getUsuarioPorId(Long id);
 }

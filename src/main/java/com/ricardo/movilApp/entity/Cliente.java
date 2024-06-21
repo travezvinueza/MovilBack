@@ -31,8 +31,7 @@ public class Cliente {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private LocalDate fecha;
 
-    @OneToOne
-    @JoinColumn(name = "usuario_id", referencedColumnName = "id")
+    @OneToOne(mappedBy = "cliente", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private Usuario usuario;
 
     @OneToOne(mappedBy = "cliente", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)

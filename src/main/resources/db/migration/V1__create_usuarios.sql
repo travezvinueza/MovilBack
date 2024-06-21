@@ -1,14 +1,3 @@
--- Crear tabla usuarios
-CREATE TABLE usuarios (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    contrasena VARCHAR(255) NOT NULL,
-    otp VARCHAR(255),
-    vigencia BOOLEAN,
-    fecha DATE
-);
-
 -- Crear tabla clientes
 CREATE TABLE clientes (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -20,9 +9,20 @@ CREATE TABLE clientes (
     direccion VARCHAR(500),
     provincia VARCHAR(255),
     capital VARCHAR(255),
+    fecha DATE
+);
+
+-- Crear tabla usuarios
+CREATE TABLE usuarios (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    contrasena VARCHAR(255) NOT NULL,
+    otp VARCHAR(255),
+    vigencia BOOLEAN,
     fecha DATE,
-    usuario_id BIGINT,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    cliente_id BIGINT,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id)
 );
 
 -- Crear tabla roles

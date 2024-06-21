@@ -2,6 +2,7 @@ package com.ricardo.movilApp.service.impl;
 
 import com.ricardo.movilApp.dto.ClienteDTO;
 import com.ricardo.movilApp.dto.ClienteUsuarioDTO;
+import com.ricardo.movilApp.dto.UsuarioDTO;
 import com.ricardo.movilApp.entity.Cliente;
 import com.ricardo.movilApp.entity.Role;
 import com.ricardo.movilApp.entity.Usuario;
@@ -40,21 +41,6 @@ public class ClienteServiceImpl implements ClienteService {
         }
 
         ClienteUsuarioDTO clienteUsuarioDTO = clienteDTO.getClienteUsuarioDTO();
-        Usuario usuario = Usuario.builder()
-                .username(clienteUsuarioDTO.getUsername())
-                .email(clienteUsuarioDTO.getEmail())
-                .contrasena(clienteUsuarioDTO.getContrasena())
-                .fecha(clienteUsuarioDTO.getFecha())
-                .vigencia(true)
-                .build();
-
-        Role userRole = roleRepository.findByName("USER");
-        if (userRole == null) {
-            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "No se pudo encontrar el rol 'USER'", null);
-        }
-
-        usuario.setRoles(new HashSet<>());
-        usuario.getRoles().add(userRole);
 
         Cliente cliente = Cliente.builder()
                 .nombres(clienteDTO.getNombres())
@@ -66,14 +52,34 @@ public class ClienteServiceImpl implements ClienteService {
                 .provincia(clienteDTO.getProvincia())
                 .capital(clienteDTO.getCapital())
                 .fecha(clienteDTO.getFecha())
-                .usuario(usuario)
                 .build();
 
+        cliente = clienteRepository.save(cliente);
+
+
+        Usuario usuario = Usuario.builder()
+                .username(clienteUsuarioDTO.getUsername())
+                .email(clienteUsuarioDTO.getEmail())
+                .contrasena(clienteUsuarioDTO.getContrasena())
+                .fecha(clienteUsuarioDTO.getFecha())
+                .vigencia(true)
+                .cliente(cliente)
+                .build();
+
+        Role userRole = roleRepository.findByName("USER");
+        if (userRole == null) {
+            return new GenericResponse<>(TIPO_AUTH, RPTA_ERROR, "No se pudo encontrar el rol 'USER'", null);
+        }
+
+        usuario.setRoles(new HashSet<>());
+        usuario.getRoles().add(userRole);
 
         cliente = clienteRepository.save(cliente);
         usuario = usuarioRepository.save(usuario);
 
         clienteDTO.setId(cliente.getId());
+        clienteUsuarioDTO.setId(usuario.getId());
+        clienteUsuarioDTO.setClienteId(cliente.getId());
         return new GenericResponse<>(TIPO_AUTH, RPTA_OK, "Cliente registrado correctamente", clienteDTO);
     }
 
@@ -112,16 +118,6 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
-    public ClienteDTO buscarClientePorId(Long id) {
-        Optional<Cliente> optionalCliente = clienteRepository.findById(id);
-        if (!optionalCliente.isPresent()) {
-            throw new IllegalArgumentException("Cliente no encontrado");
-        }
-
-        return mapToDTO(optionalCliente.get());
-    }
-
-    @Override
     public List<ClienteDTO> listar() {
         List<Cliente> clientes = clienteRepository.findAll();
         return clientes.stream()
@@ -147,6 +143,8 @@ public class ClienteServiceImpl implements ClienteService {
                 .contrasena(cliente.getUsuario().getContrasena())
                 .vigencia(cliente.getUsuario().isVigencia())
                 .fecha(cliente.getFecha())
+                .clienteId(cliente.getId())
+//               .clienteId(cliente.getUsuario().getId())
                 .build();
 
         return ClienteDTO.builder()
@@ -160,7 +158,7 @@ public class ClienteServiceImpl implements ClienteService {
                 .provincia(cliente.getProvincia())
                 .capital(cliente.getCapital())
                 .fecha(cliente.getFecha())
-                .usuarioId(cliente.getUsuario().getId())
+//                .id(clienteUsuarioDTO.getClienteId())
                 .clienteUsuarioDTO(clienteUsuarioDTO)
                 .build();
     }
